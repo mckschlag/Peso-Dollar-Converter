@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Peso Converter</title>
+    <title>Global Peso Converter</title>
     <style>
         :root { --primary: #28a745; --secondary: #007bff; --error: #dc3545; --bg: #f8f9fa; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
@@ -14,9 +14,13 @@
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
         
         /* Manual Rate Section */
-        #manual-section { background: #fff3f3; padding: 10px; border-radius: 8px; border: 1px dashed var(--error); display: none; margin-top: 10px; }
-        .override-toggle { font-size: 0.8rem; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--secondary); margin-bottom: 10px; }
+        #manual-section { background: #fff3f3; padding: 15px; border-radius: 8px; border: 1px dashed var(--error); display: none; margin-bottom: 15px; }
         
+        /* Fixed Manual Toggle Layout */
+        .manual-control-wrapper { display: flex; align-items: center; margin-bottom: 15px; cursor: pointer; width: fit-content; }
+        .manual-control-wrapper input[type="checkbox"] { width: auto; margin-right: 10px; cursor: pointer; }
+        .manual-control-wrapper label { margin-bottom: 0; cursor: pointer; color: var(--secondary); display: inline-block; }
+
         .btn-row { display: flex; gap: 10px; margin-top: 15px; }
         button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .swap-btn { background: #6c757d; color: white; }
@@ -25,7 +29,7 @@
 
         #result-box { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px; text-align: center; }
         .result-text { font-size: 1.8rem; font-weight: bold; color: var(--secondary); display: block; }
-        .rate-info { font-size: 0.8rem; color: #777; }
+        .rate-info { font-size: 0.8rem; color: #777; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -49,9 +53,10 @@
         </select>
     </div>
 
-    <label class="override-toggle">
-        <input type="checkbox" id="manualMode" onchange="toggleManual()"> 🛠️ Manual Exchange Rate
-    </label>
+    <div class="manual-control-wrapper" onclick="document.getElementById('manualMode').click()">
+        <input type="checkbox" id="manualMode" onchange="toggleManual(); event.stopPropagation();">
+        <label for="manualMode">🛠️ Manual Exchange Rate</label>
+    </div>
 
     <div id="manual-section">
         <label>Set Custom Rate (1 Unit = ?):</label>
@@ -98,9 +103,11 @@
         const outputVal = document.getElementById('output-val');
         const rateText = document.getElementById('rate-text');
 
-        // Logic: If manual mode is ON, use that. If OFF, try API.
         if (manualMode) {
-            if (isNaN(manualRate)) return alert("Please enter a manual rate.");
+            if (isNaN(manualRate)) {
+                alert("Please enter a manual rate.");
+                return;
+            }
             processConversion(amount, manualRate, "Manual Override");
         } else {
             const base = isPesoToUsd ? peso : "USD";
@@ -121,7 +128,7 @@
 
     function processConversion(amount, rate, source) {
         const peso = document.getElementById('pesoType').value;
-        const total = (amount * rate).toLocaleString(undefined, {minimumFractionDigits: 2});
+        const total = (amount * rate).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         const targetLabel = isPesoToUsd ? "USD" : peso;
         const baseLabel = isPesoToUsd ? peso : "USD";
 
