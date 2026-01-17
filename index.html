@@ -38,7 +38,7 @@
     
     <div class="group">
         <label id="input-label">Amount in Pesos:</label>
-        <input type="number" id="amount" placeholder="0.00" value="100">
+        <input type="text" id="amount" placeholder="0.00" value="100" oninput="formatAmountInput(this)">
     </div>
 
     <div class="group">
@@ -80,6 +80,17 @@
 <script>
     let isPesoToUsd = true;
 
+    // Formats the input field with commas while typing
+    function formatAmountInput(input) {
+        let value = input.value.replace(/,/g, ''); // Remove existing commas
+        if (!isNaN(value) && value !== "") {
+            // Split into parts to handle decimals correctly
+            let parts = value.split(".");
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ","); // Add commas to integer part
+            input.value = parts.join(".");
+        }
+    }
+
     function toggleManual() {
         const isChecked = document.getElementById('manualMode').checked;
         document.getElementById('manual-section').style.display = isChecked ? 'block' : 'none';
@@ -98,16 +109,11 @@
     }
 
     function resetForm() {
-        // Reset inputs
-        document.getElementById('amount').value = 100;
+        document.getElementById('amount').value = "100";
         document.getElementById('pesoType').selectedIndex = 0;
         document.getElementById('manualMode').checked = false;
         document.getElementById('manualRate').value = "";
-        
-        // Reset state
         isPesoToUsd = true;
-        
-        // Update UI
         toggleManual();
         updateUI();
         document.getElementById('output-val').innerText = "$0.00";
@@ -115,7 +121,10 @@
     }
 
     async function convert() {
-        const amount = parseFloat(document.getElementById('amount').value);
+        // Strip commas before processing the number
+        const rawAmount = document.getElementById('amount').value.replace(/,/g, '');
+        const amount = parseFloat(rawAmount);
+        
         const peso = document.getElementById('pesoType').value;
         const manualMode = document.getElementById('manualMode').checked;
         const manualRate = parseFloat(document.getElementById('manualRate').value);
@@ -158,6 +167,7 @@
 
     function processConversion(amount, rate, source) {
         const peso = document.getElementById('pesoType').value;
+        // Use toLocaleString for the final output formatting
         const total = (amount * rate).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         const targetLabel = isPesoToUsd ? "USD" : peso;
         const baseLabel = isPesoToUsd ? peso : "USD";
