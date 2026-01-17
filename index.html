@@ -5,26 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Peso Converter</title>
     <style>
-        :root { --primary: #28a745; --secondary: #007bff; --error: #dc3545; --bg: #f8f9fa; }
+        :root { --primary: #28a745; --secondary: #007bff; --error: #dc3545; --bg: #f8f9fa; --reset: #6c757d; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
         h2 { text-align: center; margin-bottom: 1.5rem; color: #333; }
         .group { margin-bottom: 1rem; }
         label { font-size: 0.85rem; font-weight: bold; color: #666; display: block; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
         
-        /* Manual Rate Section */
         #manual-section { background: #fff3f3; padding: 15px; border-radius: 8px; border: 1px dashed var(--error); display: none; margin-bottom: 15px; }
         
-        /* Fixed Manual Toggle Layout */
-        .manual-control-wrapper { display: flex; align-items: center; margin-bottom: 15px; cursor: pointer; width: fit-content; }
-        .manual-control-wrapper input[type="checkbox"] { width: auto; margin-right: 10px; cursor: pointer; }
-        .manual-control-wrapper label { margin-bottom: 0; cursor: pointer; color: var(--secondary); display: inline-block; }
+        .manual-control-wrapper { display: flex; align-items: center; margin-bottom: 15px; width: fit-content; }
+        .manual-control-wrapper input[type="checkbox"] { width: auto; margin: 0 10px 0 0; cursor: pointer; height: 18px; width: 18px; }
+        .manual-control-wrapper label { margin-bottom: 0; cursor: pointer; color: var(--secondary); font-size: 0.9rem; }
 
-        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
-        button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .swap-btn { background: #6c757d; color: white; }
+        .btn-row { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+        button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 100px; }
+        .swap-btn { background: var(--reset); color: white; }
         .convert-btn { background: var(--primary); color: white; flex: 2; }
+        .reset-btn { background: #e0e0e0; color: #333; width: 100%; margin-top: 8px; }
         button:hover { opacity: 0.9; }
 
         #result-box { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px; text-align: center; }
@@ -43,29 +42,33 @@
     </div>
 
     <div class="group">
-        <label>Currency Type:</label>
+        <label>Select Your Peso:</label>
         <select id="pesoType" onchange="updateUI()">
             <option value="MXN">Mexican Peso (MXN)</option>
             <option value="PHP">Philippine Peso (PHP)</option>
             <option value="CLP">Chilean Peso (CLP)</option>
             <option value="COP">Colombian Peso (COP)</option>
             <option value="ARS">Argentine Peso (ARS)</option>
+            <option value="DOP">Dominican Peso (DOP)</option>
+            <option value="UYU">Uruguayan Peso (UYU)</option>
+            <option value="CUP">Cuban Peso (CUP)</option>
         </select>
     </div>
 
-    <div class="manual-control-wrapper" onclick="document.getElementById('manualMode').click()">
-        <input type="checkbox" id="manualMode" onchange="toggleManual(); event.stopPropagation();">
+    <div class="manual-control-wrapper">
+        <input type="checkbox" id="manualMode" onchange="toggleManual()">
         <label for="manualMode">🛠️ Manual Exchange Rate</label>
     </div>
 
     <div id="manual-section">
         <label>Set Custom Rate (1 Unit = ?):</label>
-        <input type="number" id="manualRate" step="0.0001" placeholder="e.g. 0.051">
+        <input type="number" id="manualRate" step="0.000001" placeholder="e.g. 0.051">
     </div>
 
     <div class="btn-row">
         <button class="swap-btn" onclick="swap()">⇄ Swap</button>
         <button class="convert-btn" onclick="convert()">Convert</button>
+        <button class="reset-btn" onclick="resetForm()">↺ Reset All</button>
     </div>
 
     <div id="result-box">
@@ -78,8 +81,8 @@
     let isPesoToUsd = true;
 
     function toggleManual() {
-        const section = document.getElementById('manual-section');
-        section.style.display = document.getElementById('manualMode').checked ? 'block' : 'none';
+        const isChecked = document.getElementById('manualMode').checked;
+        document.getElementById('manual-section').style.display = isChecked ? 'block' : 'none';
     }
 
     function updateUI() {
@@ -94,6 +97,23 @@
         convert();
     }
 
+    function resetForm() {
+        // Reset inputs
+        document.getElementById('amount').value = 100;
+        document.getElementById('pesoType').selectedIndex = 0;
+        document.getElementById('manualMode').checked = false;
+        document.getElementById('manualRate').value = "";
+        
+        // Reset state
+        isPesoToUsd = true;
+        
+        // Update UI
+        toggleManual();
+        updateUI();
+        document.getElementById('output-val').innerText = "$0.00";
+        document.getElementById('rate-text').innerText = "Enter amount and convert";
+    }
+
     async function convert() {
         const amount = parseFloat(document.getElementById('amount').value);
         const peso = document.getElementById('pesoType').value;
@@ -103,9 +123,14 @@
         const outputVal = document.getElementById('output-val');
         const rateText = document.getElementById('rate-text');
 
+        if (isNaN(amount) || amount <= 0) {
+            alert("Please enter a valid amount.");
+            return;
+        }
+
         if (manualMode) {
-            if (isNaN(manualRate)) {
-                alert("Please enter a manual rate.");
+            if (isNaN(manualRate) || manualRate <= 0) {
+                alert("Please enter a valid manual rate.");
                 return;
             }
             processConversion(amount, manualRate, "Manual Override");
@@ -114,12 +139,17 @@
             const target = isPesoToUsd ? "USD" : peso;
             
             try {
-                const response = await fetch(`https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${target}`);
-                if (!response.ok) throw new Error("API Down");
+                const response = await fetch(`https://open.er-api.com/v6/latest/${base}`);
                 const data = await response.json();
-                processConversion(amount, data.rates[target], "Live Rate");
+                
+                if (data.result === "success") {
+                    const rate = data.rates[target];
+                    processConversion(amount, rate, "Live Rate");
+                } else {
+                    throw new Error("API Limit");
+                }
             } catch (error) {
-                alert("Connection failed. Switching to manual mode.");
+                alert("Live rates unavailable. Manual mode enabled.");
                 document.getElementById('manualMode').checked = true;
                 toggleManual();
             }
@@ -133,7 +163,7 @@
         const baseLabel = isPesoToUsd ? peso : "USD";
 
         document.getElementById('output-val').innerText = (targetLabel === "USD" ? "$" : "") + total + " " + targetLabel;
-        document.getElementById('rate-text').innerText = `${source}: 1 ${baseLabel} = ${rate.toFixed(4)} ${targetLabel}`;
+        document.getElementById('rate-text').innerText = `${source}: 1 ${baseLabel} = ${rate.toFixed(6)} ${targetLabel}`;
     }
 </script>
 
