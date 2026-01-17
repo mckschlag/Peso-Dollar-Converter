@@ -1,0 +1,91 @@
+import tkinter as tk
+from tkinter import messagebox
+import requests
+
+# Track the current conversion direction
+# True = Peso to USD, False = USD to Peso
+is_peso_to_usd = True
+
+def swap_direction():
+    global is_peso_to_usd
+    is_peso_to_usd = not is_peso_to_usd
+    
+    # Update labels and button text based on direction
+    if is_peso_to_usd:
+        label_direction.config(text="Convert: Peso ➔ USD")
+        btn_convert.config(text="Convert to USD")
+    else:
+        label_direction.config(text="Convert: USD ➔ Peso")
+        btn_convert.config(text=f"Convert to {selected_peso.get()}")
+
+def get_conversion():
+    amount_str = entry_amount.get()
+    peso_type = selected_peso.get()
+    
+    try:
+        amount = float(amount_str)
+    except ValueError:
+        messagebox.showerror("Error", "Please enter a valid number.")
+        return
+
+    # Set base and target based on current direction
+    base = peso_type if is_peso_to_usd else "USD"
+    target = "USD" if is_peso_to_usd else peso_type
+    
+    url = f"https://api.frankfurter.dev/v1/latest?base={base}&symbols={target}"
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        
+        rate = data['rates'][target]
+        total = amount * rate
+        
+        # Format the display
+        symbol = "$" if target == "USD" else ""
+        label_result.config(text=f"{symbol}{total:,.2f} {target}", fg="#007bff")
+        label_rate.config(text=f"Rate: 1 {base} = {rate:.4f} {target}")
+        
+    except Exception as e:
+        messagebox.showerror("API Error", "Could not fetch exchange rates.")
+
+# --- GUI Setup ---
+root = tk.Tk()
+root.title("Currency Swap Converter")
+root.geometry("350x450")
+root.configure(padx=20, pady=20)
+
+# Direction Label
+label_direction = tk.Label(root, text="Convert: Peso ➔ USD", font=("Arial", 12, "bold"), fg="#555")
+label_direction.pack(pady=10)
+
+# Amount Input
+tk.Label(root, text="Enter Amount:", font=("Arial", 10)).pack()
+entry_amount = tk.Entry(root, font=("Arial", 14), justify='center')
+entry_amount.pack(pady=5)
+
+# Pulldown Menu for Peso Type
+tk.Label(root, text="Select Peso Type:", font=("Arial", 10)).pack(pady=(10, 0))
+peso_options = ["MXN", "PHP", "CLP", "COP", "ARS", "DOP", "UYU"]
+selected_peso = tk.StringVar(root)
+selected_peso.set(peso_options[0])
+dropdown = tk.OptionMenu(root, selected_peso, *peso_options)
+dropdown.pack(pady=5)
+
+# Swap Button
+btn_swap = tk.Button(root, text="⇄ Swap Direction", command=swap_direction, bg="#6c757d", fg="white")
+btn_swap.pack(pady=10)
+
+# Convert Button
+btn_convert = tk.Button(root, text="Convert to USD", command=get_conversion, 
+                        bg="#28a745", fg="white", font=("Arial", 11, "bold"), height=2, width=20)
+btn_convert.pack(pady=15)
+
+# Results
+label_result = tk.Label(root, text="--", font=("Arial", 18, "bold"))
+label_result.pack()
+label_rate = tk.Label(root, text="Rate: --", font=("Arial", 9), fg="gray")
+label_rate.pack()
+
+root.mainloop()
